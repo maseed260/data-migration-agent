@@ -1,4 +1,4 @@
-# data-migration-agent
+# Data-migration-agent
 
 Automated Migration and Reconciliation for SQL Server to Snowflake
 
