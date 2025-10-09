@@ -1,4 +1,52 @@
+-- ############### Tools
+---- Snowflake docs knowledge extension
+CREATE OR REPLACE PROCEDURE search_snowflake_documentation(
+    query STRING
+)
+RETURNS STRING
+LANGUAGE PYTHON
+RUNTIME_VERSION = '3.10'
+PACKAGES = ('snowflake-snowpark-python','snowflake-ml-python')
+HANDLER = 'search_snowflake_documentation'
+AS
+$$
+import json
+from snowflake.core import Root
+def search_snowflake_documentation(session, query: str) -> str:
+    """Searches Snowflake documentation for information related to the query.
 
+    Args:
+        query (str): The query to search in Snowflake documentation.
+
+    Returns:
+        str: The search results from Snowflake documentation.
+    """
+    root = Root(session)
+
+    # fetch service
+    my_service = (root
+        .databases["SNOWFLAKE_DOCUMENTATION"]
+        .schemas["SHARED"]
+        .cortex_search_services["CKE_SNOWFLAKE_DOCS_SERVICE"]
+    )
+
+    # query service
+    resp = my_service.search(
+        query=query,
+        columns=["CHUNK"],
+        limit=3,
+    )
+
+    json_resp = json.loads(resp.to_json())
+
+    context =  ""
+    for result in json_resp["results"]:
+        context += f"Chunk: {result['CHUNK']}\n"
+
+    return context
+$$;
+
+call search_snowflake_documentation('snowflake intelligence');
 
 ------ Execute query tool
 CREATE OR REPLACE PROCEDURE execute_snowflake_ddl(
